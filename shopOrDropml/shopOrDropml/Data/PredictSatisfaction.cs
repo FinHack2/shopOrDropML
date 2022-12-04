@@ -19,7 +19,7 @@ namespace shopOrDropml.Data
         public float ItemCost;
 
         [LoadColumn(3)]
-        public int Satisfaction;
+        public float Satisfaction;
 
         [LoadColumn(4)]
         public bool Online;

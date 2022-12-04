@@ -6,9 +6,9 @@ using System.Diagnostics;
 
 string dir = Directory.GetCurrentDirectory();
 Debug.WriteLine(dir);
-string _trainDataPath = Path.Combine(dir, "Data", "train.csv");
-string _testDataPath = Path.Combine(dir, "Data", "test.csv");
-string _modelPath = Path.Combine(dir, "Data", "Model.zip");
+string _trainDataPath = Path.Combine(Environment.CurrentDirectory, "Data", "train.csv");
+string _testDataPath = Path.Combine(Environment.CurrentDirectory, "Data", "test.csv");
+string _modelPath = Path.Combine(Environment.CurrentDirectory, "Data", "Model.zip");
 
 MLContext mlContext = new MLContext(seed: 0);
 var model = Train(mlContext, _trainDataPath);
@@ -18,10 +18,11 @@ TestSinglePrediction(mlContext, model);
 ITransformer Train(MLContext mlContext, string dataPath)
 {
     IDataView dataView = mlContext.Data.LoadFromTextFile<PurchaseData>(dataPath, hasHeader: true, separatorChar: ',');
-    var pipeline = mlContext.Transforms.CopyColumns(outputColumnName: "Label", inputColumnName: "pred")
+    var pipeline = mlContext.Transforms.CopyColumns(outputColumnName: "Label", inputColumnName: "Satisfaction")
         .Append(mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "DayEncoded", inputColumnName: "DayofWeek"))
         .Append(mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "CategoryEncoded", inputColumnName: "Category"))
-        .Append(mlContext.Transforms.Concatenate("Features", "DayEncoded", "CategoryEncoded", "ItemCost", "Online"))
+        .Append(mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "OnlineEncoded", inputColumnName: "Online"))
+        .Append(mlContext.Transforms.Concatenate("Features", "DayEncoded", "CategoryEncoded", "ItemCost", "OnlineEncoded"))
         .Append(mlContext.Regression.Trainers.FastTree());
     var model = pipeline.Fit(dataView);
     return model;
@@ -53,6 +54,6 @@ void TestSinglePrediction(MLContext mlContext, ITransformer model)
     };
     var prediction = predictionFunction.Predict(purchaseSample);
     Console.WriteLine($"**********************************************************************");
-    Console.WriteLine($"Predicted fare: {prediction.Satisfaction:0.####}, actual fare: 15.5");
+    Console.WriteLine($"Predicted satisfaction: {prediction.Satisfaction:0.####}");
     Console.WriteLine($"**********************************************************************");
 }
